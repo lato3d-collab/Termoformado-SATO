@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Calculadora de Termoformado</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#101215;
+  --panel:#181b20;
+  --panel2:#20242a;
+  --line:#303640;
+  --text:#f5f7fa;
+  --muted:#aeb6c2;
+  --accent:#ff5a36;
+  --good:#72d572;
+  --warning:#ffc857;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+main{max-width:760px;margin:0 auto;padding:18px 14px 34px}
+header{padding:8px 2px 18px}
+h1{font-size:26px;line-height:1.08;margin:0 0 7px;font-weight:850;letter-spacing:-.5px}
+.subtitle{color:var(--muted);font-size:14px;line-height:1.4}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:12px;box-shadow:0 8px 28px rgba(0,0,0,.18)}
+.section-title{font-weight:800;font-size:15px;margin-bottom:12px}
+.segment{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px}
+.segment button{appearance:none;border:1px solid var(--line);border-radius:12px;background:var(--panel2);color:var(--text);padding:11px 8px;font-weight:750;font-size:14px}
+.segment button.active{border-color:var(--accent);background:rgba(255,90,54,.14);color:#fff}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field.full{grid-column:1/-1}
+label{font-size:12px;color:var(--muted);font-weight:700}
+input{width:100%;border:1px solid var(--line);background:#0f1114;color:#fff;border-radius:11px;padding:12px;font-size:17px;outline:none}
+input:focus{border-color:var(--accent)}
+.unit{position:relative}
+.unit span{position:absolute;right:11px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);pointer-events:none}
+.unit input{padding-right:42px}
+button.calculate{width:100%;border:0;border-radius:13px;background:var(--accent);color:#fff;font-size:16px;font-weight:850;padding:14px;margin-top:14px}
+details{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+summary{color:var(--muted);font-size:13px;font-weight:700;cursor:pointer}
+.advanced{margin-top:10px;max-width:220px}
+.separation{margin-top:10px;color:var(--muted);font-size:12px}
+.best{border-color:rgba(114,213,114,.6);background:linear-gradient(180deg,rgba(114,213,114,.08),rgba(24,27,32,1) 48%)}
+.best-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(114,213,114,.13);color:var(--good);padding:6px 9px;border-radius:999px;font-size:11px;font-weight:850;text-transform:uppercase;letter-spacing:.5px}
+.best-main{display:flex;justify-content:space-between;gap:12px;align-items:flex-end;margin-top:12px}
+.best-name{font-size:20px;font-weight:850}
+.best-dim{font-size:12px;color:var(--muted);margin-top:4px}
+.big-number{text-align:right;font-size:38px;font-weight:900;line-height:.9;color:var(--good)}
+.big-label{text-align:right;color:var(--muted);font-size:11px;margin-top:6px}
+.layout-info{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.pill{border:1px solid var(--line);background:var(--panel2);border-radius:999px;padding:6px 9px;color:#dbe0e7;font-size:12px;font-weight:700}
+.results{display:grid;gap:8px}
+.result-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:12px;background:#14171b}
+.result-row.selected{border-color:rgba(114,213,114,.45)}
+.result-name{font-weight:800;font-size:14px}
+.result-meta{font-size:11px;color:var(--muted);margin-top:4px}
+.result-total{font-size:24px;font-weight:900;text-align:right}
+.result-total small{display:block;color:var(--muted);font-size:10px;font-weight:700}
+.graph-wrap{background:#0d0f12;border:1px solid var(--line);border-radius:14px;padding:12px;overflow:hidden}
+.graph-title{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font-size:11px;font-weight:750;margin-bottom:8px}
+svg{width:100%;height:auto;display:block;background:#15191e;border-radius:8px}
+.empty{color:var(--muted);font-size:13px;text-align:center;padding:24px 8px}
+footer{color:#707987;text-align:center;font-size:11px;padding-top:8px}
+.hidden{display:none!important}
+@media(max-width:420px){h1{font-size:23px}.grid{grid-template-columns:1fr 1fr}.card{padding:13px}.big-number{font-size:34px}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Calculadora de Termoformado</h1>
+    <div class="subtitle">Ingresá las medidas de la pieza y la app compara automáticamente los 4 marcos.</div>
+  </header>
+
+  <section class="card">
+    <div class="section-title">Datos de la pieza</div>
+    <div class="segment">
+      <button id="btnCircular" class="active" type="button">Circular</button>
+      <button id="btnRect" type="button">Rectangular</button>
+    </div>
+
+    <div class="grid">
+      <div id="circularFields" class="field full">
+        <label for="diameter">Diámetro</label>
+        <div class="unit"><input id="diameter" type="number" min="0.1" step="0.1" value="60"><span>mm</span></div>
+      </div>
+
+      <div id="rectWidthField" class="field hidden">
+        <label for="width">Ancho</label>
+        <div class="unit"><input id="width" type="number" min="0.1" step="0.1" value="60"><span>mm</span></div>
+      </div>
+      <div id="rectLengthField" class="field hidden">
+        <label for="length">Largo</label>
+        <div class="unit"><input id="length" type="number" min="0.1" step="0.1" value="80"><span>mm</span></div>
+      </div>
+
+      <div class="field full">
+        <label for="height">Altura de la pieza</label>
+        <div class="unit"><input id="height" type="number" min="0" step="0.1" value="30"><span>mm</span></div>
+      </div>
+    </div>
+
+    <details>
+      <summary>Ajustes</summary>
+      <div class="field advanced">
+        <label for="factor">Factor de separación</label>
+        <input id="factor" type="number" min="0" step="0.1" value="1.5">
+      </div>
+    </details>
+    <div class="separation" id="sepText">Separación aplicada: 45 mm</div>
+    <button class="calculate" id="calculate" type="button">Calcular mejor opción</button>
+  </section>
+
+  <section id="bestCard" class="card best">
+    <span class="best-tag">Mejor opción</span>
+    <div class="best-main">
+      <div>
+        <div class="best-name" id="bestName">Marco 2</div>
+        <div class="best-dim" id="bestDim">485 × 495 mm</div>
+      </div>
+      <div>
+        <div class="big-number" id="bestTotal">25</div>
+        <div class="big-label">piezas</div>
+      </div>
+    </div>
+    <div class="layout-info">
+      <span class="pill" id="bestGrid">5 × 5</span>
+      <span class="pill" id="bestOrientation">Orientación normal</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="section-title">Resultado por marco</div>
+    <div id="results" class="results"></div>
+  </section>
+
+  <section class="card">
+    <div class="section-title">Distribución</div>
+    <div class="graph-wrap">
+      <div class="graph-title"><span id="graphLabel">Marco 2</span><span id="graphCount">25 piezas</span></div>
+      <svg id="layoutSvg" viewBox="0 0 485 495" aria-label="Distribución de piezas"></svg>
+    </div>
+  </section>
+
+  <footer>Versión 1.0 · cálculo local sin conexión</footer>
+</main>
+<script>
+const frames = [
+  {name:'Marco 1', w:485, h:395},
+  {name:'Marco 2', w:485, h:495},
+  {name:'Marco 3', w:485, h:290},
+  {name:'Marco 4', w:485, h:340}
+];
+
+let shape = 'circular';
+const $ = id => document.getElementById(id);
+const fmt = n => Number.isInteger(n) ? String(n) : Number(n.toFixed(1)).toString();
+
+function setShape(next){
+  shape = next;
+  $('btnCircular').classList.toggle('active', shape==='circular');
+  $('btnRect').classList.toggle('active', shape==='rectangular');
+  $('circularFields').classList.toggle('hidden', shape!=='circular');
+  $('rectWidthField').classList.toggle('hidden', shape!=='rectangular');
+  $('rectLengthField').classList.toggle('hidden', shape!=='rectangular');
+  calculate();
+}
+
+function fitCount(frameW, frameH, pieceW, pieceH, sep){
+  if(pieceW<=0 || pieceH<=0 || frameW<=0 || frameH<=0) return {x:0,y:0,total:0};
+  const x = Math.max(0, Math.floor((frameW + sep) / (pieceW + sep)));
+  const y = Math.max(0, Math.floor((frameH + sep) / (pieceH + sep)));
+  return {x,y,total:x*y};
+}
+
+function resultForFrame(frame,pw,ph,sep){
+  const normal = fitCount(frame.w,frame.h,pw,ph,sep);
+  if(shape==='circular' || Math.abs(pw-ph)<0.001){
+    return {...frame,...normal,pw,ph,rotated:false};
+  }
+  const rotated = fitCount(frame.w,frame.h,ph,pw,sep);
+  if(rotated.total > normal.total){
+    return {...frame,...rotated,pw:ph,ph:pw,rotated:true};
+  }
+  return {...frame,...normal,pw,ph,rotated:false};
+}
+
+function calculate(){
+  const height = parseFloat($('height').value) || 0;
+  const factor = Math.max(0, parseFloat($('factor').value) || 0);
+  const sep = Math.max(0, height * factor);
+  $('sepText').textContent = `Separación aplicada: ${fmt(sep)} mm`;
+
+  let pw,ph;
+  if(shape==='circular'){
+    const d = parseFloat($('diameter').value) || 0;
+    pw = d; ph = d;
+  }else{
+    pw = parseFloat($('width').value) || 0;
+    ph = parseFloat($('length').value) || 0;
+  }
+
+  const all = frames.map(f=>resultForFrame(f,pw,ph,sep));
+  const valid = all.filter(r=>r.total>0);
+  if(!valid.length){
+    $('bestCard').classList.add('hidden');
+    $('results').innerHTML = '<div class="empty">La pieza no entra en ninguno de los marcos con estas medidas.</div>';
+    $('layoutSvg').innerHTML = '';
+    $('graphLabel').textContent = 'Sin distribución';
+    $('graphCount').textContent = '0 piezas';
+    return;
+  }
+
+  $('bestCard').classList.remove('hidden');
+  const best = [...valid].sort((a,b)=>{
+    if(b.total!==a.total) return b.total-a.total;
+    return (a.w*a.h)-(b.w*b.h);
+  })[0];
+
+  $('bestName').textContent = best.name;
+  $('bestDim').textContent = `${best.w} × ${best.h} mm`;
+  $('bestTotal').textContent = best.total;
+  $('bestGrid').textContent = `${best.x} × ${best.y}`;
+  $('bestOrientation').textContent = best.rotated ? 'Girado 90°' : 'Orientación normal';
+
+  $('results').innerHTML = all.map(r=>`
+    <div class="result-row ${r.name===best.name?'selected':''}">
+      <div>
+        <div class="result-name">${r.name}</div>
+        <div class="result-meta">${r.w} × ${r.h} mm · ${r.x} × ${r.y}${r.rotated?' · giro 90°':''}</div>
+      </div>
+      <div class="result-total">${r.total}<small>piezas</small></div>
+    </div>
+  `).join('');
+
+  drawLayout(best,sep);
+}
+
+function drawLayout(r,sep){
+  const svg = $('layoutSvg');
+  svg.setAttribute('viewBox',`0 0 ${r.w} ${r.h}`);
+  const parts=[];
+  parts.push(`<rect x="1" y="1" width="${r.w-2}" height="${r.h-2}" rx="4" fill="#15191e" stroke="#5d6876" stroke-width="2"/>`);
+
+  const usedW = r.x*r.pw + Math.max(0,r.x-1)*sep;
+  const usedH = r.y*r.ph + Math.max(0,r.y-1)*sep;
+  const offsetX = Math.max(0,(r.w-usedW)/2);
+  const offsetY = Math.max(0,(r.h-usedH)/2);
+
+  for(let yy=0; yy<r.y; yy++){
+    for(let xx=0; xx<r.x; xx++){
+      const x = offsetX + xx*(r.pw+sep);
+      const y = offsetY + yy*(r.ph+sep);
+      if(shape==='circular'){
+        const radius = r.pw/2;
+        parts.push(`<circle cx="${x+radius}" cy="${y+radius}" r="${Math.max(0,radius-1.2)}" fill="rgba(255,90,54,.2)" stroke="#ff7658" stroke-width="2"/>`);
+      }else{
+        parts.push(`<rect x="${x+1}" y="${y+1}" width="${Math.max(0,r.pw-2)}" height="${Math.max(0,r.ph-2)}" rx="3" fill="rgba(255,90,54,.2)" stroke="#ff7658" stroke-width="2"/>`);
+      }
+    }
+  }
+  svg.innerHTML=parts.join('');
+  $('graphLabel').textContent = `${r.name} · ${r.w} × ${r.h} mm`;
+  $('graphCount').textContent = `${r.total} piezas`;
+}
+
+$('btnCircular').addEventListener('click',()=>setShape('circular'));
+$('btnRect').addEventListener('click',()=>setShape('rectangular'));
+$('calculate').addEventListener('click',calculate);
+['diameter','width','length','height','factor'].forEach(id=>$(id).addEventListener('input',calculate));
+calculate();
+</script>
+</body>
+</html>
